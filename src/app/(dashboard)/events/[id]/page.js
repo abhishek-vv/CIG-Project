@@ -13,20 +13,23 @@ export default function EventDetailPage() {
   const [event,   setEvent]   = useState(null);
   const [albums,  setAlbums]  = useState([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   // New album form
   const [showAlbumForm, setShowAlbumForm] = useState(false);
-  const [albumForm, setAlbumForm] = useState({ name: "", description: "", isPublic: true });
-  const [albumLoading, setAlbumLoading] = useState(false);
+  const [albumForm,     setAlbumForm]     = useState({ name: "", description: "", isPublic: true });
+  const [albumLoading,  setAlbumLoading]  = useState(false);
+  const [albumError,    setAlbumError]    = useState("");
 
   async function fetchEvent() {
-    const res = await fetch(`/api/events/${id}`);
+    const res  = await fetch(`/api/events/${id}`);
     const data = await res.json();
-    if (res.ok) setEvent(data.event);
+    if (!res.ok) { setNotFound(true); return; }
+    setEvent(data.event);
   }
 
   async function fetchAlbums() {
-    const res = await fetch(`/api/albums?eventId=${id}`);
+    const res  = await fetch(`/api/albums?eventId=${id}`);
     const data = await res.json();
     if (res.ok) setAlbums(data.albums || []);
   }
@@ -36,7 +39,7 @@ export default function EventDetailPage() {
       await Promise.all([fetchEvent(), fetchAlbums()]);
       setLoading(false);
     }
-    load();
+    if (id) load();
   }, [id]);
 
   async function handleDeleteEvent() {
@@ -47,6 +50,7 @@ export default function EventDetailPage() {
 
   async function handleCreateAlbum(e) {
     e.preventDefault();
+    setAlbumError("");
     setAlbumLoading(true);
 
     const res = await fetch("/api/albums", {
@@ -58,8 +62,10 @@ export default function EventDetailPage() {
     const data = await res.json();
     setAlbumLoading(false);
 
-    if (res.ok) {
-      setAlbums([data.album, ...albums]);
+    if (!res.ok) {
+      setAlbumError(data.error);
+    } else {
+      await fetchAlbums();
       setAlbumForm({ name: "", description: "", isPublic: true });
       setShowAlbumForm(false);
     }
@@ -71,68 +77,90 @@ export default function EventDetailPage() {
     if (res.ok) setAlbums(albums.filter((a) => a._id !== albumId));
   }
 
-  const isOwner = session?.user?.id === event?.createdBy?._id?.toString();
-  const isAdmin = session?.user?.role === "ADMIN";
-  const canEdit = isOwner || isAdmin;
-  const canCreateAlbum = ["ADMIN", "PHOTOGRAPHER", "CLUB_MEMBER"].includes(session?.user?.role);
+  async function handleToggleAlbumVisibility(albumId, currentIsPublic) {
+    const res = await fetch(`/api/albums/${albumId}`, {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ isPublic: !currentIsPublic }),
+    });
+    if (res.ok) fetchAlbums();
+  }
 
   if (loading) {
     return (
-      <div className="animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"/>
-        <div className="h-4 bg-gray-100 rounded w-1/2 mb-2"/>
-        <div className="h-4 bg-gray-100 rounded w-1/4"/>
+      <div className="animate-pulse space-y-4">
+        <div className="h-4 bg-gray-200 rounded w-24"/>
+        <div className="h-8 bg-gray-200 rounded w-1/3"/>
+        <div className="h-4 bg-gray-100 rounded w-1/2"/>
+        <div className="h-32 bg-gray-100 rounded"/>
       </div>
     );
   }
 
-  if (!event) {
+  if (notFound || !event) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">Event not found</p>
+        <p className="text-4xl mb-3">📅</p>
+        <p className="font-medium text-gray-700">Event not found</p>
         <Link href="/events" className="text-purple-600 hover:underline text-sm mt-2 inline-block">
-          Back to events
+          ← Back to events
         </Link>
       </div>
     );
   }
 
+  const isCreator     = session?.user?.id === event.createdBy?._id?.toString();
+  const canEdit       = isCreator;
+  const canCreateAlbum = !!session?.user;
+
   return (
     <div>
       {/* Event header */}
-      <div className="mb-6">
-        <Link href="/events" className="text-sm text-gray-500 hover:text-gray-700">← Back to events</Link>
-        <div className="flex items-start justify-between mt-2">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">{event.name}</h1>
-            <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-              <span className="capitalize">{event.category}</span>
-              <span>•</span>
-              <span>{new Date(event.date).toLocaleDateString()}</span>
-              <span>•</span>
-              <span>By {event.createdBy?.name}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                event.isPublic ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-              }`}>
-                {event.isPublic ? "Public" : "Private"}
-              </span>
-            </div>
-            {event.description && (
-              <p className="text-gray-600 mt-2">{event.description}</p>
-            )}
-          </div>
+      <Link href="/events" className="text-sm text-gray-500 hover:text-gray-700">
+        ← Back to events
+      </Link>
 
-          {canEdit && (
-            <div className="flex gap-2">
-              <button
-                onClick={handleDeleteEvent}
-                className="text-sm text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition"
-              >
-                Delete
-              </button>
-            </div>
+      <div className="flex items-start justify-between mt-2 mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">{event.name}</h1>
+          <div className="flex items-center gap-3 mt-1 text-sm text-gray-500 flex-wrap">
+            <span className="capitalize">{event.category}</span>
+            <span>•</span>
+            <span>{new Date(event.date).toLocaleDateString()}</span>
+            <span>•</span>
+            <span>By {event.createdBy?.name}</span>
+            {event.club && (
+              <>
+                <span>•</span>
+                <Link
+                  href={`/clubs/${event.club?._id}`}
+                  className="text-purple-600 hover:underline"
+                >
+                  {event.club?.name}
+                </Link>
+              </>
+            )}
+            <span className={`text-xs px-2 py-0.5 rounded-full ${
+              event.isPublic
+                ? "bg-green-100 text-green-700"
+                : "bg-gray-100 text-gray-600"
+            }`}>
+              {event.isPublic ? "Public" : "Private"}
+            </span>
+          </div>
+          {event.description && (
+            <p className="text-gray-600 mt-2">{event.description}</p>
           )}
         </div>
+
+        {canEdit && (
+          <button
+            onClick={handleDeleteEvent}
+            className="text-sm text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition shrink-0 ml-4"
+          >
+            Delete event
+          </button>
+        )}
       </div>
 
       {/* Albums section */}
@@ -178,8 +206,15 @@ export default function EventDetailPage() {
                 onChange={(e) => setAlbumForm({ ...albumForm, isPublic: e.target.checked })}
                 className="w-4 h-4 accent-purple-600"
               />
-              <label htmlFor="albumPublic" className="text-sm text-gray-700">Public album</label>
+              <label htmlFor="albumPublic" className="text-sm text-gray-700">
+                Public album
+              </label>
             </div>
+
+            {albumError && (
+              <p className="text-red-500 text-sm">{albumError}</p>
+            )}
+
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -190,7 +225,7 @@ export default function EventDetailPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setShowAlbumForm(false)}
+                onClick={() => { setShowAlbumForm(false); setAlbumError(""); }}
                 className="border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition"
               >
                 Cancel
@@ -229,23 +264,36 @@ export default function EventDetailPage() {
                   )}
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ml-2 ${
-                  album.isPublic ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                  album.isPublic
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-600"
                 }`}>
                   {album.isPublic ? "Public" : "Private"}
                 </span>
               </div>
+
               <div className="flex items-center justify-between mt-3">
                 <p className="text-xs text-gray-400">
-                  {new Date(album.createdAt).toLocaleDateString()}
+                  By {album.createdBy?.name} • {new Date(album.createdAt).toLocaleDateString()}
                 </p>
-                {canEdit && (
-                  <button
-                    onClick={() => handleDeleteAlbum(album._id)}
-                    className="text-xs text-red-400 hover:text-red-600 transition"
-                  >
-                    Delete
-                  </button>
-                )}
+                <div className="flex gap-2">
+                  {(canEdit || album.createdBy?._id?.toString() === session?.user?.id) && (
+                    <button
+                      onClick={() => handleToggleAlbumVisibility(album._id, album.isPublic)}
+                      className="text-xs text-gray-500 border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      {album.isPublic ? "Make private" : "Make public"}
+                    </button>
+                  )}
+                  {(canEdit || album.createdBy?._id?.toString() === session?.user?.id) && (
+                    <button
+                      onClick={() => handleDeleteAlbum(album._id)}
+                      className="text-xs text-red-400 hover:text-red-600 transition"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

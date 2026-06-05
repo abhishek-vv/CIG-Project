@@ -4,19 +4,26 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
+const CATEGORIES = ["technical", "cultural", "sports", "photography", "music", "dance", "other"];
+
 export default function ClubsPage() {
   const { data: session } = useSession();
-  const [clubs,   setClubs]   = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [clubs,    setClubs]   = useState([]);
+  const [loading,  setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "", category: "other" });
-  const [error, setError] = useState("");
+  const [form,     setForm]    = useState({ name: "", description: "", category: "other" });
+  const [error,    setError]   = useState("");
   const [creating, setCreating] = useState(false);
 
-  const CATEGORIES = ["technical", "cultural", "sports", "photography", "music", "dance", "other"];
+  // Join modal state
+  const [joinClub,    setJoinClub]    = useState(null); // which club to join
+  const [inviteCode,  setInviteCode]  = useState("");
+  const [joinError,   setJoinError]   = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [joinSuccess, setJoinSuccess] = useState("");
 
   async function fetchClubs() {
-    const res = await fetch("/api/clubs");
+    const res  = await fetch("/api/clubs");
     const data = await res.json();
     setClubs(data.clubs || []);
     setLoading(false);
@@ -29,12 +36,11 @@ export default function ClubsPage() {
     setError("");
     setCreating(true);
 
-    const res = await fetch("/api/clubs", {
+    const res  = await fetch("/api/clubs", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(form),
     });
-
     const data = await res.json();
     setCreating(false);
 
@@ -47,18 +53,38 @@ export default function ClubsPage() {
     }
   }
 
-  async function handleJoin(clubId) {
-    const res = await fetch(`/api/clubs/${clubId}/join`, { method: "POST" });
+  async function handleJoin(e) {
+    e.preventDefault();
+    setJoinError("");
+    setJoinSuccess("");
+    setJoinLoading(true);
+
+    const res  = await fetch(`/api/clubs/${joinClub._id}/join`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ inviteCode }),
+    });
     const data = await res.json();
-    if (res.ok) {
-      fetchClubs();
+    setJoinLoading(false);
+
+    if (!res.ok) {
+      setJoinError(data.error);
     } else {
-      alert(data.error);
+      setJoinSuccess(data.message);
+      await fetchClubs();
+      setTimeout(() => {
+        setJoinClub(null);
+        setInviteCode("");
+        setJoinSuccess("");
+      }, 1500);
     }
   }
 
   function isMember(club) {
-    return club.members?.some((m) => m.user?._id === session?.user?.id || m.user === session?.user?.id);
+    return club.members?.some(
+      (m) => m.user?._id === session?.user?.id ||
+             m.user === session?.user?.id
+    );
   }
 
   function isAdmin(club) {
@@ -112,9 +138,7 @@ export default function ClubsPage() {
               ))}
             </select>
 
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
+            {error && <p className="text-red-500 text-sm">{error}</p>}
 
             <div className="flex gap-2">
               <button
@@ -156,7 +180,10 @@ export default function ClubsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {clubs.map((club) => (
-            <div key={club._id} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-sm transition">
+            <div
+              key={club._id}
+              className="bg-white border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-sm transition"
+            >
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h3 className="font-semibold text-gray-900">{club.name}</h3>
@@ -187,7 +214,12 @@ export default function ClubsPage() {
                   </Link>
                   {!isMember(club) && !isAdmin(club) && (
                     <button
-                      onClick={() => handleJoin(club._id)}
+                      onClick={() => {
+                        setJoinClub(club);
+                        setInviteCode("");
+                        setJoinError("");
+                        setJoinSuccess("");
+                      }}
                       className="text-xs bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700 transition"
                     >
                       Join
@@ -197,6 +229,63 @@ export default function ClubsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Join modal */}
+      {joinClub && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              Join {joinClub.name}
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Enter the invite code given by your club admin.
+            </p>
+
+            <form onSubmit={handleJoin} className="space-y-3">
+              <input
+                type="text"
+                placeholder="e.g. MEM-ABC12345"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
+              />
+              <p className="text-xs text-gray-400">
+                Codes starting with <span className="font-medium">MEM-</span> give Club Member role.
+                Codes starting with <span className="font-medium">PHO-</span> give Photographer role.
+              </p>
+
+              {joinError && (
+                <p className="text-red-500 text-sm">{joinError}</p>
+              )}
+              {joinSuccess && (
+                <p className="text-green-600 text-sm">{joinSuccess}</p>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={joinLoading}
+                  className="flex-1 bg-purple-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-purple-700 transition disabled:opacity-60"
+                >
+                  {joinLoading ? "Joining..." : "Join club"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setJoinClub(null);
+                    setInviteCode("");
+                    setJoinError("");
+                  }}
+                  className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

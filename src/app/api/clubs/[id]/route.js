@@ -3,11 +3,12 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Club from "@/models/Club";
 
-// GET single club
 export async function GET(req, { params }) {
   try {
     await connectDB();
     const { id } = await params;
+    const session = await auth();
+
     const club = await Club.findById(id)
       .populate("createdBy", "name email")
       .populate("members.user", "name email image");
@@ -16,14 +17,26 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ club }, { status: 200 });
+    // Check if current user is member of THIS club specifically
+    const isAdmin = club.createdBy?._id?.toString() === session?.user?.id;
+    const isMember = club.members.some(
+      (m) => m.user?._id?.toString() === session?.user?.id
+    );
+
+    // Hide invite codes from non-admins
+    const clubData = club.toObject();
+    if (!isAdmin) {
+      delete clubData.memberCode;
+      delete clubData.photographerCode;
+    }
+
+    return NextResponse.json({ club: clubData, isAdmin, isMember }, { status: 200 });
   } catch (error) {
     console.error("GET club error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// DELETE club
 export async function DELETE(req, { params }) {
   try {
     const session = await auth();
@@ -33,6 +46,7 @@ export async function DELETE(req, { params }) {
 
     await connectDB();
     const { id } = await params;
+
     const club = await Club.findById(id);
     if (!club) {
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
