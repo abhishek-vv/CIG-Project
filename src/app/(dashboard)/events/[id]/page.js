@@ -10,12 +10,11 @@ export default function EventDetailPage() {
   const router = useRouter();
   const { id } = useParams();
 
-  const [event,   setEvent]   = useState(null);
-  const [albums,  setAlbums]  = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [event,    setEvent]    = useState(null);
+  const [albums,   setAlbums]   = useState([]);
+  const [loading,  setLoading]  = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  // New album form
   const [showAlbumForm, setShowAlbumForm] = useState(false);
   const [albumForm,     setAlbumForm]     = useState({ name: "", description: "", isPublic: true });
   const [albumLoading,  setAlbumLoading]  = useState(false);
@@ -109,13 +108,12 @@ export default function EventDetailPage() {
     );
   }
 
-  const isCreator     = session?.user?.id === event.createdBy?._id?.toString();
-  const canEdit       = isCreator;
+  const isCreator      = session?.user?.id === event.createdBy?._id?.toString();
+  const canEdit        = isCreator;
   const canCreateAlbum = !!session?.user;
 
   return (
     <div>
-      {/* Event header */}
       <Link href="/events" className="text-sm text-gray-500 hover:text-gray-700">
         ← Back to events
       </Link>
@@ -163,7 +161,6 @@ export default function EventDetailPage() {
         )}
       </div>
 
-      {/* Albums section */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">
           Albums <span className="text-gray-400 font-normal text-base">({albums.length})</span>
@@ -178,7 +175,6 @@ export default function EventDetailPage() {
         )}
       </div>
 
-      {/* Create album form */}
       {showAlbumForm && (
         <div className="bg-white border border-purple-200 rounded-xl p-5 mb-4">
           <h3 className="font-medium text-gray-900 mb-4">New album</h3>
@@ -235,7 +231,6 @@ export default function EventDetailPage() {
         </div>
       )}
 
-      {/* Albums grid */}
       {albums.length === 0 ? (
         <div className="text-center py-16 text-gray-400 border border-dashed border-gray-200 rounded-xl">
           <p className="text-3xl mb-2">🗂️</p>
@@ -257,12 +252,12 @@ export default function EventDetailPage() {
               className="bg-white border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-sm transition"
             >
               <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{album.name}</h3>
-                  {album.description && (
-                    <p className="text-gray-500 text-sm mt-1">{album.description}</p>
-                  )}
-                </div>
+                <Link
+                  href={`/albums/${album._id}`}
+                  className="font-semibold text-gray-900 hover:text-purple-600 transition"
+                >
+                  {album.name}
+                </Link>
                 <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ml-2 ${
                   album.isPublic
                     ? "bg-green-100 text-green-700"
@@ -271,6 +266,10 @@ export default function EventDetailPage() {
                   {album.isPublic ? "Public" : "Private"}
                 </span>
               </div>
+
+              {album.description && (
+                <p className="text-gray-500 text-sm mt-1">{album.description}</p>
+              )}
 
               <div className="flex items-center justify-between mt-3">
                 <p className="text-xs text-gray-400">

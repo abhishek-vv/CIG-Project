@@ -3,13 +3,6 @@
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 
-const ROLE_COLORS = {
-  ADMIN:        "bg-red-100 text-red-700",
-  PHOTOGRAPHER: "bg-blue-100 text-blue-700",
-  CLUB_MEMBER:  "bg-green-100 text-green-700",
-  USER:         "bg-gray-100 text-gray-600",
-};
-
 export default function Navbar() {
   const { data: session } = useSession();
 
@@ -28,6 +21,12 @@ export default function Navbar() {
         </Link>
         <Link href="/events" className="text-sm text-gray-600 hover:text-gray-900 transition">
           Events
+        </Link>
+        <Link href="/upload" className="text-sm text-gray-600 hover:text-gray-900 transition">
+          Upload
+        </Link>
+        <Link href="/my-photos" className="text-sm text-gray-600 hover:text-gray-900 transition">
+          My Media
         </Link>
 
         {session?.user && (

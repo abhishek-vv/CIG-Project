@@ -29,7 +29,7 @@ export default async function DashboardPage() {
   const stats = [
     { label: "Events", value: eventCount, href: "/events",  color: "text-purple-600" },
     { label: "Albums", value: albumCount, href: "/events",  color: "text-blue-600"   },
-    { label: "Photos", value: mediaCount, href: "/events",  color: "text-green-600"  },
+    { label: "Media", value: mediaCount, href: "/events",  color: "text-green-600"  },
     { label: "Likes",  value: 0,          href: "#",        color: "text-pink-600"   },
   ];
 
