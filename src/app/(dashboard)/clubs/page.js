@@ -8,22 +8,24 @@ const CATEGORIES = ["technical", "cultural", "sports", "photography", "music", "
 
 export default function ClubsPage() {
   const { data: session } = useSession();
-  const [clubs,    setClubs]   = useState([]);
-  const [loading,  setLoading] = useState(true);
+  const [clubs, setClubs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form,     setForm]    = useState({ name: "", description: "", category: "other" });
-  const [error,    setError]   = useState("");
+  const [form, setForm] = useState({ name: "", description: "", category: "other" });
+  const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
+  const myClubs = clubs.filter((club) => isAdmin(club) || isMember(club));
+  const otherClubs = clubs.filter((club) => !isAdmin(club) && !isMember(club));
 
   // Join modal state
-  const [joinClub,    setJoinClub]    = useState(null); // which club to join
-  const [inviteCode,  setInviteCode]  = useState("");
-  const [joinError,   setJoinError]   = useState("");
+  const [joinClub, setJoinClub] = useState(null); // which club to join
+  const [inviteCode, setInviteCode] = useState("");
+  const [joinError, setJoinError] = useState("");
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinSuccess, setJoinSuccess] = useState("");
 
   async function fetchClubs() {
-    const res  = await fetch("/api/clubs");
+    const res = await fetch("/api/clubs");
     const data = await res.json();
     setClubs(data.clubs || []);
     setLoading(false);
@@ -36,10 +38,10 @@ export default function ClubsPage() {
     setError("");
     setCreating(true);
 
-    const res  = await fetch("/api/clubs", {
-      method:  "POST",
+    const res = await fetch("/api/clubs", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(form),
+      body: JSON.stringify(form),
     });
     const data = await res.json();
     setCreating(false);
@@ -59,10 +61,10 @@ export default function ClubsPage() {
     setJoinSuccess("");
     setJoinLoading(true);
 
-    const res  = await fetch(`/api/clubs/${joinClub._id}/join`, {
-      method:  "POST",
+    const res = await fetch(`/api/clubs/${joinClub._id}/join`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ inviteCode }),
+      body: JSON.stringify({ inviteCode }),
     });
     const data = await res.json();
     setJoinLoading(false);
@@ -83,13 +85,13 @@ export default function ClubsPage() {
   function isMember(club) {
     return club.members?.some(
       (m) => m.user?._id === session?.user?.id ||
-             m.user === session?.user?.id
+        m.user === session?.user?.id
     );
   }
 
   function isAdmin(club) {
     return club.createdBy?._id === session?.user?.id ||
-           club.createdBy === session?.user?.id;
+      club.createdBy === session?.user?.id;
   }
 
   return (
@@ -163,11 +165,11 @@ export default function ClubsPage() {
       {/* Clubs grid */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1,2,3].map((i) => (
+          {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-3 w-3/4"/>
-              <div className="h-3 bg-gray-100 rounded mb-2 w-1/2"/>
-              <div className="h-3 bg-gray-100 rounded w-1/4"/>
+              <div className="h-4 bg-gray-200 rounded mb-3 w-3/4" />
+              <div className="h-3 bg-gray-100 rounded mb-2 w-1/2" />
+              <div className="h-3 bg-gray-100 rounded w-1/4" />
             </div>
           ))}
         </div>
@@ -178,57 +180,109 @@ export default function ClubsPage() {
           <p className="text-sm mt-1">Be the first to create a club!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {clubs.map((club) => (
-            <div
-              key={club._id}
-              className="bg-white border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-sm transition"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{club.name}</h3>
-                  <span className="text-xs text-gray-400 capitalize">{club.category}</span>
-                </div>
-                {isAdmin(club) && (
-                  <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Admin</span>
-                )}
-                {!isAdmin(club) && isMember(club) && (
-                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Joined</span>
-                )}
-              </div>
+        <div className="space-y-8">
 
-              {club.description && (
-                <p className="text-gray-500 text-sm mb-3 line-clamp-2">{club.description}</p>
-              )}
-
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-xs text-gray-400">
-                  {club.members?.length || 0} members
-                </span>
-                <div className="flex gap-2">
-                  <Link
-                    href={`/clubs/${club._id}`}
-                    className="text-xs text-purple-600 border border-purple-200 px-3 py-1 rounded-lg hover:bg-purple-50 transition"
+          {myClubs.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-gray-700 mb-3">
+                My Clubs ({myClubs.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {myClubs.map((club) => (
+                  <div
+                    key={club._id}
+                    className="bg-white border border-purple-200 rounded-xl p-5 hover:border-purple-400 hover:shadow-sm transition"
                   >
-                    View
-                  </Link>
-                  {!isMember(club) && !isAdmin(club) && (
-                    <button
-                      onClick={() => {
-                        setJoinClub(club);
-                        setInviteCode("");
-                        setJoinError("");
-                        setJoinSuccess("");
-                      }}
-                      className="text-xs bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700 transition"
-                    >
-                      Join
-                    </button>
-                  )}
-                </div>
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{club.name}</h3>
+                        <span className="text-xs text-gray-400 capitalize">{club.category}</span>
+                      </div>
+                      {isAdmin(club) && (
+                        <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full shrink-0 ml-2">
+                          Admin
+                        </span>
+                      )}
+                      {!isAdmin(club) && isMember(club) && (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0 ml-2">
+                          Joined
+                        </span>
+                      )}
+                    </div>
+
+                    {club.description && (
+                      <p className="text-gray-500 text-sm mb-3 line-clamp-2">{club.description}</p>
+                    )}
+
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-xs text-gray-400">
+                        {club.members?.length || 0} members
+                      </span>
+                      <Link
+                        href={`/clubs/${club._id}`}
+                        className="text-xs text-purple-600 border border-purple-200 px-3 py-1 rounded-lg hover:bg-purple-50 transition"
+                      >
+                        View
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          )}
+
+          {otherClubs.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-gray-700 mb-3">
+                Other Clubs ({otherClubs.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {otherClubs.map((club) => (
+                  <div
+                    key={club._id}
+                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-sm transition"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{club.name}</h3>
+                        <span className="text-xs text-gray-400 capitalize">{club.category}</span>
+                      </div>
+                    </div>
+
+                    {club.description && (
+                      <p className="text-gray-500 text-sm mb-3 line-clamp-2">{club.description}</p>
+                    )}
+
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-xs text-gray-400">
+                        {club.members?.length || 0} members
+                      </span>
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/clubs/${club._id}`}
+                          className="text-xs text-purple-600 border border-purple-200 px-3 py-1 rounded-lg hover:bg-purple-50 transition"
+                        >
+                          View
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setJoinClub(club);
+                            setInviteCode("");
+                            setJoinError("");
+                            setJoinSuccess("");
+                          }}
+                          className="text-xs bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700 transition"
+                        >
+                          Join
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 

@@ -10,25 +10,25 @@ export default function EventDetailPage() {
   const router = useRouter();
   const { id } = useParams();
 
-  const [event,    setEvent]    = useState(null);
-  const [albums,   setAlbums]   = useState([]);
-  const [loading,  setLoading]  = useState(true);
+  const [event, setEvent] = useState(null);
+  const [albums, setAlbums] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   const [showAlbumForm, setShowAlbumForm] = useState(false);
-  const [albumForm,     setAlbumForm]     = useState({ name: "", description: "", isPublic: true });
-  const [albumLoading,  setAlbumLoading]  = useState(false);
-  const [albumError,    setAlbumError]    = useState("");
+  const [albumForm, setAlbumForm] = useState({ name: "", description: "", isPublic: true });
+  const [albumLoading, setAlbumLoading] = useState(false);
+  const [albumError, setAlbumError] = useState("");
 
   async function fetchEvent() {
-    const res  = await fetch(`/api/events/${id}`);
+    const res = await fetch(`/api/events/${id}`);
     const data = await res.json();
     if (!res.ok) { setNotFound(true); return; }
     setEvent(data.event);
   }
 
   async function fetchAlbums() {
-    const res  = await fetch(`/api/albums?eventId=${id}`);
+    const res = await fetch(`/api/albums?eventId=${id}`);
     const data = await res.json();
     if (res.ok) setAlbums(data.albums || []);
   }
@@ -53,9 +53,9 @@ export default function EventDetailPage() {
     setAlbumLoading(true);
 
     const res = await fetch("/api/albums", {
-      method:  "POST",
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ ...albumForm, eventId: id }),
+      body: JSON.stringify({ ...albumForm, eventId: id }),
     });
 
     const data = await res.json();
@@ -76,22 +76,31 @@ export default function EventDetailPage() {
     if (res.ok) setAlbums(albums.filter((a) => a._id !== albumId));
   }
 
-  async function handleToggleAlbumVisibility(albumId, currentIsPublic) {
-    const res = await fetch(`/api/albums/${albumId}`, {
-      method:  "PATCH",
+  async function handleToggleEventVisibility() {
+    if (!event) return;
+
+    const res = await fetch(`/api/events/${id}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ isPublic: !currentIsPublic }),
+      body: JSON.stringify({ isPublic: !event.isPublic }),
     });
-    if (res.ok) fetchAlbums();
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error);
+    } else {
+      setEvent(data.event);
+      fetchAlbums();
+    }
   }
 
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-4 bg-gray-200 rounded w-24"/>
-        <div className="h-8 bg-gray-200 rounded w-1/3"/>
-        <div className="h-4 bg-gray-100 rounded w-1/2"/>
-        <div className="h-32 bg-gray-100 rounded"/>
+        <div className="h-4 bg-gray-200 rounded w-24" />
+        <div className="h-8 bg-gray-200 rounded w-1/3" />
+        <div className="h-4 bg-gray-100 rounded w-1/2" />
+        <div className="h-32 bg-gray-100 rounded" />
       </div>
     );
   }
@@ -108,8 +117,8 @@ export default function EventDetailPage() {
     );
   }
 
-  const isCreator      = session?.user?.id === event.createdBy?._id?.toString();
-  const canEdit        = isCreator;
+  const isCreator = session?.user?.id === event.createdBy?._id?.toString();
+  const canEdit = isCreator;
   const canCreateAlbum = !!session?.user;
 
   return (
@@ -138,11 +147,10 @@ export default function EventDetailPage() {
                 </Link>
               </>
             )}
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              event.isPublic
-                ? "bg-green-100 text-green-700"
-                : "bg-gray-100 text-gray-600"
-            }`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${event.isPublic
+              ? "bg-green-100 text-green-700"
+              : "bg-gray-100 text-gray-600"
+              }`}>
               {event.isPublic ? "Public" : "Private"}
             </span>
           </div>
@@ -151,13 +159,24 @@ export default function EventDetailPage() {
           )}
         </div>
 
-        {canEdit && (
-          <button
-            onClick={handleDeleteEvent}
-            className="text-sm text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition shrink-0 ml-4"
-          >
-            Delete event
-          </button>
+        {canEdit && event && (
+          <div className="flex gap-2 shrink-0 ml-4">
+            <button
+              onClick={handleToggleEventVisibility}
+              className={`text-sm border px-3 py-1.5 rounded-lg transition ${event.isPublic
+                  ? "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  : "border-green-200 text-green-600 hover:bg-green-50"
+                }`}
+            >
+              {event.isPublic ? "Make private" : "Make public"}
+            </button>
+            <button
+              onClick={handleDeleteEvent}
+              className="text-sm text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition"
+            >
+              Delete event
+            </button>
+          </div>
         )}
       </div>
 
@@ -258,11 +277,10 @@ export default function EventDetailPage() {
                 >
                   {album.name}
                 </Link>
-                <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ml-2 ${
-                  album.isPublic
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ml-2 ${album.isPublic
+                  ? "bg-green-100 text-green-700"
+                  : "bg-gray-100 text-gray-600"
+                  }`}>
                   {album.isPublic ? "Public" : "Private"}
                 </span>
               </div>

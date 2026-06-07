@@ -7,7 +7,7 @@ import Media from "@/models/Media";
 import Link from "next/link";
 
 const ROLE_BADGE = {
-  USER:        "bg-gray-100 text-gray-600",
+  USER: "bg-gray-100 text-gray-600",
   SUPER_ADMIN: "bg-red-100 text-red-700",
 };
 
@@ -27,16 +27,16 @@ export default async function DashboardPage() {
   const { name, role } = session.user;
 
   const stats = [
-    { label: "Events", value: eventCount, href: "/events",  color: "text-purple-600" },
-    { label: "Albums", value: albumCount, href: "/events",  color: "text-blue-600"   },
-    { label: "Media", value: mediaCount, href: "/events",  color: "text-green-600"  },
-    { label: "Likes",  value: 0,          href: "#",        color: "text-pink-600"   },
+    { label: "Events", value: eventCount, href: "/events", color: "text-purple-600" },
+    { label: "Albums", value: albumCount, href: "/albums", color: "text-blue-600" },
+    { label: "Media", value: mediaCount, href: "/my-photos", color: "text-green-600" },
+    { label: "Likes", value: 0, href: "/favourites", color: "text-pink-600" },
   ];
 
   const quickActions = [
-    { label: "Browse clubs",  href: "/clubs",      show: ["USER", "SUPER_ADMIN"] },
-    { label: "Browse events", href: "/events",     show: ["USER", "SUPER_ADMIN"] },
-    { label: "My photos",     href: "/my-photos",  show: ["USER", "SUPER_ADMIN"] },
+    { label: "Browse clubs", href: "/clubs", show: ["USER", "SUPER_ADMIN"] },
+    { label: "Browse events", href: "/events", show: ["USER", "SUPER_ADMIN"] },
+    { label: "My photos", href: "/my-photos", show: ["USER", "SUPER_ADMIN"] },
   ];
 
   return (

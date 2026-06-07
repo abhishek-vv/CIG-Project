@@ -11,12 +11,12 @@ export async function GET(req) {
     await connectDB();
     const session = await auth();
     const { searchParams } = new URL(req.url);
-    const albumId  = searchParams.get("albumId");
-    const userId   = searchParams.get("userId");
+    const albumId = searchParams.get("albumId");
+    const userId = searchParams.get("userId");
 
     let query = {};
     if (albumId) query.album = albumId;
-    if (userId)  query.uploadedBy = userId;
+    if (userId) query.uploadedBy = userId;
 
     let isMemberOfClub = false;
     if (albumId && session?.user) {
@@ -26,7 +26,7 @@ export async function GET(req) {
         if (event) {
           const club = await Club.findById(event.club);
           if (club) {
-            const isAdmin  = club.createdBy?.toString() === session.user.id;
+            const isAdmin = club.createdBy?.toString() === session.user.id;
             const isMember = club.members.some((m) => m.user?.toString() === session.user.id);
             isMemberOfClub = isAdmin || isMember;
           }
@@ -40,6 +40,7 @@ export async function GET(req) {
 
     const media = await Media.find(query)
       .populate("uploadedBy", "name image")
+      .populate("taggedUsers", "name email")
       .sort({ createdAt: -1 });
 
     return NextResponse.json({ media }, { status: 200 });

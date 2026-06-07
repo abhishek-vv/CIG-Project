@@ -12,31 +12,69 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const eventId = searchParams.get("eventId");
 
-    let query = {};
-    if (eventId) query.event = eventId;
+    // If eventId provided — existing logic
+    if (eventId) {
+      let isMemberOfClub = false;
 
-    // Check if user is member of the club this event belongs to
-    let isMemberOfClub = false;
-    if (eventId && session?.user) {
-      const event = await Event.findById(eventId);
-      if (event) {
-        const club = await Club.findById(event.club);
-        if (club) {
-          const isAdmin  = club.createdBy?.toString() === session.user.id;
-          const isMember = club.members.some(
-            (m) => m.user?.toString() === session.user.id
-          );
-          isMemberOfClub = isAdmin || isMember;
+      if (session?.user) {
+        const event = await Event.findById(eventId);
+        if (event) {
+          const club = await Club.findById(event.club);
+          if (club) {
+            const isAdmin = club.createdBy?.toString() === session.user.id;
+            const isMember = club.members.some(
+              (m) => m.user?.toString() === session.user.id
+            );
+            isMemberOfClub = isAdmin || isMember;
+          }
         }
       }
+
+      const query = { event: eventId };
+      if (!isMemberOfClub) query.isPublic = true;
+
+      const albums = await Album.find(query)
+        .populate("event", "name date")
+        .populate("createdBy", "name")
+        .sort({ createdAt: -1 });
+
+      return NextResponse.json({ albums }, { status: 200 });
     }
 
-    // Non-members only see public albums
-    if (!isMemberOfClub) {
-      query.isPublic = true;
+    // No eventId — return all accessible albums
+    if (!session?.user) {
+      // Not logged in — only public albums
+      const albums = await Album.find({ isPublic: true })
+        .populate("event", "name date")
+        .populate("createdBy", "name")
+        .sort({ createdAt: -1 });
+
+      return NextResponse.json({ albums }, { status: 200 });
     }
 
-    const albums = await Album.find(query)
+    // Logged in — find all clubs user is member of
+    const userClubs = await Club.find({
+      $or: [
+        { createdBy: session.user.id },
+        { "members.user": session.user.id },
+      ],
+    });
+
+    const userClubIds = userClubs.map((c) => c._id.toString());
+
+    // Get all events from user's clubs
+    const clubEvents = await Event.find({ club: { $in: userClubIds } });
+    const clubEventIds = clubEvents.map((e) => e._id.toString());
+
+    // Get all albums:
+    // - public albums from any event
+    // - private albums only from events in user's clubs
+    const albums = await Album.find({
+      $or: [
+        { isPublic: true },
+        { event: { $in: clubEventIds } },
+      ],
+    })
       .populate("event", "name date")
       .populate("createdBy", "name")
       .sort({ createdAt: -1 });
@@ -59,8 +97,6 @@ export async function POST(req) {
 
     const { name, description, eventId, isPublic } = await req.json();
 
-    console.log("Creating album:", { name, eventId, isPublic });
-
     if (!name || !eventId) {
       return NextResponse.json(
         { error: "Name and event are required" },
@@ -68,13 +104,10 @@ export async function POST(req) {
       );
     }
 
-    // Check if user is member of the club this event belongs to
     const event = await Event.findById(eventId);
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
-
-    console.log("Event found:", event.name, "club:", event.club);
 
     const club = await Club.findById(event.club);
     if (!club) {
@@ -86,8 +119,6 @@ export async function POST(req) {
       (m) => m.user?.toString() === session.user.id
     );
 
-    console.log("isAdmin:", isAdmin, "isMember:", isMember);
-
     if (!isAdmin && !isMember) {
       return NextResponse.json(
         { error: "You must be a club member to create albums" },
@@ -95,15 +126,16 @@ export async function POST(req) {
       );
     }
 
+    // If event is private, album must be private too
+    const albumIsPublic = event.isPublic ? (isPublic ?? true) : false;
+
     const album = await Album.create({
       name,
       description,
       event:     eventId,
-      isPublic:  isPublic ?? true,
+      isPublic:  albumIsPublic,
       createdBy: session.user.id,
     });
-
-    console.log("Album created:", album._id);
 
     return NextResponse.json({ album }, { status: 201 });
   } catch (error) {
