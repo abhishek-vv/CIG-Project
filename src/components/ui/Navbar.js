@@ -48,7 +48,7 @@ export default function Navbar() {
           <SearchBar />
 
           {session?.user && (
-            <>
+            <div className="flex items-center gap-3">
               <NotificationBell />
               <div className="hidden sm:flex items-center gap-2 border-l border-zinc-800 pl-3">
                 <div className="w-7 h-7 bg-purple-600/20 text-purple-400 rounded-full flex items-center justify-center text-xs font-bold">
@@ -62,7 +62,7 @@ export default function Navbar() {
                   Sign out
                 </button>
               </div>
-            </>
+            </div>
           )}
 
           <button
