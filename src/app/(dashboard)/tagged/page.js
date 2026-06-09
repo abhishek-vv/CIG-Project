@@ -130,13 +130,13 @@ export default function TaggedPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Tagged</h1>
-          <p className="text-gray-500 text-sm mt-1">{media.length} photos you are tagged in</p>
+          <h1 className="text-2xl font-semibold text-gray-200">Tagged</h1>
+          <p className="text-gray-350 text-sm mt-1">{media.length} photos you are tagged in</p>
         </div>
       </div>
 
       {media.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-gray-200 rounded-xl text-gray-400">
+        <div className="text-center py-20 border border-dashed border-gray-200 rounded-xl text-zinc-300">
           <p className="text-4xl mb-3">🏷️</p>
           <p className="font-medium">No tagged photos yet</p>
           <p className="text-sm mt-1">When someone tags you in a photo it will appear here</p>
@@ -186,30 +186,30 @@ export default function TaggedPage() {
                 <img src={selected.url} alt="full size" className="w-full rounded-xl object-contain max-h-96"/>
               )}
 
-              <div className="bg-white rounded-xl p-4 mt-2">
+              <div className="bg-zinc-900 rounded-xl p-4 mt-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <p className="text-sm text-gray-600">By {selected.uploadedBy?.name}</p>
+                  <p className="text-sm text-zinc-250">By {selected.uploadedBy?.name}</p>
                   <div className="flex items-center gap-3">
                     <button onClick={() => handleLike(selected._id)} className="flex items-center gap-1">
                       {likes[selected._id]?.liked ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer text-red-500" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                         </svg>
                       ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                         </svg>
                       )}
-                      <span className="text-sm text-gray-600">{likes[selected._id]?.count || 0}</span>
+                      <span className="text-sm text-zinc-250">{likes[selected._id]?.count || 0}</span>
                     </button>
 
                     <button onClick={() => handleFavourite(selected._id)}>
                       {favourites[selected._id] ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
                         </svg>
                       ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
                         </svg>
                       )}
@@ -217,21 +217,21 @@ export default function TaggedPage() {
 
                     <button
                       onClick={() => setShowShare(true)}
-                      className="text-sm text-gray-500 hover:text-gray-700"
+                      className="text-sm text-zinc-300 cursor-pointer hover:text-gray-300"
                     >
                       🔗 Share
                     </button>
 
                     <button
                       onClick={() => downloadMedia(selected.url, `photo-${selected._id}`)}
-                      className="bg-purple-600 text-white text-sm px-3 py-1.5 rounded-lg hover:bg-purple-700 transition"
+                      className="bg-purple-600 cursor-pointer text-white text-sm px-3 py-1.5 rounded-lg hover:bg-purple-700 transition"
                     >
                       Download
                     </button>
 
                     <button
                       onClick={handleRemoveTag}
-                      className="text-sm text-red-500 hover:text-red-700"
+                      className="text-sm cursor-pointer text-red-500 hover:text-red-700"
                     >
                       Remove tag
                     </button>
@@ -240,23 +240,23 @@ export default function TaggedPage() {
               </div>
             </div>
 
-            <div className="w-72 bg-white rounded-xl flex flex-col shrink-0">
+            <div className="w-72 bg-zinc-900 rounded-xl flex flex-col shrink-0">
               <div className="px-4 py-3 border-b border-gray-100">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-zinc-200">
                   Comments ({comments.length})
                 </p>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-80">
                 {comments.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">No comments yet</p>
+                  <p className="text-sm text-zinc-300 text-center py-4">No comments yet</p>
                 ) : (
                   comments.map((comment) => (
                     <div key={comment._id} className="flex items-start gap-2">
                       <div className="flex-1">
-                        <p className="text-xs font-medium text-gray-900">{comment.user?.name}</p>
-                        <p className="text-sm text-gray-700">{comment.content}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs font-medium text-zinc-200">{comment.user?.name}</p>
+                        <p className="text-sm text-zinc-200">{comment.content}</p>
+                        <p className="text-xs text-zinc-250 mt-0.5">
                           {new Date(comment.createdAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -281,12 +281,12 @@ export default function TaggedPage() {
                     placeholder="Add a comment..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="flex-1 border text-black border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                   <button
                     type="submit"
                     disabled={commentLoading}
-                    className="bg-purple-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-60"
+                    className="bg-purple-600 cursor-pointer text-white px-3 py-2 rounded-lg text-sm hover:bg-purple-700 transition disabled:opacity-60"
                   >
                     Post
                   </button>

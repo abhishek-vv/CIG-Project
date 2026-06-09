@@ -12,7 +12,11 @@ export async function GET(req, { params }) {
     const session = await auth();
 
     const album = await Album.findById(id)
-      .populate("event", "name date club isPublic")
+      .populate({
+        path: "event",
+        select: "name date club isPublic",
+        populate: { path: "club", select: "name" },
+      })
       .populate("createdBy", "name");
 
     if (!album) {
@@ -20,11 +24,11 @@ export async function GET(req, { params }) {
     }
 
     const event = await Event.findById(album.event);
-    const club  = await Club.findById(event?.club);
+    const club = await Club.findById(event?.club);
 
     const isClubAdmin = club?.createdBy?.toString() === session?.user?.id;
-    const isCreator   = album.createdBy?._id?.toString() === session?.user?.id;
-    const canEdit     = isClubAdmin || isCreator;
+    const isCreator = album.createdBy?._id?.toString() === session?.user?.id;
+    const canEdit = isClubAdmin || isCreator;
 
     return NextResponse.json({ album, canEdit }, { status: 200 });
   } catch (error) {
@@ -48,10 +52,10 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ error: "Album not found" }, { status: 404 });
     }
 
-    const event       = await Event.findById(album.event);
-    const club        = await Club.findById(event?.club);
+    const event = await Event.findById(album.event);
+    const club = await Club.findById(event?.club);
     const isClubAdmin = club?.createdBy?.toString() === session.user.id;
-    const isCreator   = album.createdBy?.toString() === session.user.id;
+    const isCreator = album.createdBy?.toString() === session.user.id;
 
     if (!isClubAdmin && !isCreator) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -95,10 +99,10 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: "Album not found" }, { status: 404 });
     }
 
-    const event       = await Event.findById(album.event);
-    const club        = await Club.findById(event?.club);
+    const event = await Event.findById(album.event);
+    const club = await Club.findById(event?.club);
     const isClubAdmin = club?.createdBy?.toString() === session.user.id;
-    const isCreator   = album.createdBy?.toString() === session.user.id;
+    const isCreator = album.createdBy?.toString() === session.user.id;
 
     if (!isClubAdmin && !isCreator) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -6,6 +6,8 @@ import Media from "@/models/Media";
 import Album from "@/models/Album";
 import Event from "@/models/Event";
 import Club from "@/models/Club";
+import rekognition from "@/lib/rekognition";
+import { DetectLabelsCommand } from "@aws-sdk/client-rekognition";
 
 export async function POST(req) {
   try {
@@ -17,8 +19,8 @@ export async function POST(req) {
     await connectDB();
 
     const formData = await req.formData();
-    const files    = formData.getAll("files");
-    const albumId  = formData.get("albumId");
+    const files = formData.getAll("files");
+    const albumId = formData.get("albumId");
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
@@ -43,8 +45,8 @@ export async function POST(req) {
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    const isAdmin  = club.createdBy?.toString() === session.user.id;
-    const member   = club.members.find((m) => m.user?.toString() === session.user.id);
+    const isAdmin = club.createdBy?.toString() === session.user.id;
+    const member = club.members.find((m) => m.user?.toString() === session.user.id);
     const canUpload = isAdmin || ["PHOTOGRAPHER", "CLUB_MEMBER"].includes(member?.role);
 
     if (!canUpload) {
@@ -54,31 +56,56 @@ export async function POST(req) {
     const uploaded = [];
 
     for (const file of files) {
-      const bytes  = await file.arrayBuffer();
+      const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const base64 = buffer.toString("base64");
       const dataUri = `data:${file.type};base64,${base64}`;
 
-      const isVideo      = file.type.startsWith("video/");
+      const isVideo = file.type.startsWith("video/");
       const resourceType = isVideo ? "video" : "image";
 
       const result = await cloudinary.uploader.upload(dataUri, {
-        folder:        `campus-media-hub/${club._id}/${event._id}/${albumId}`,
+        folder: `campus-media-hub/${club._id}/${event._id}/${albumId}`,
         resource_type: resourceType,
         transformation: isVideo ? [] : [{ quality: "auto", fetch_format: "auto" }],
       });
 
+      let aiTags = [];
+
+      if (!isVideo) {
+        try {
+          const labelResult = await rekognition.send(
+            new DetectLabelsCommand({
+              Image: {
+                Bytes: buffer,
+              },
+              MaxLabels: 20,
+              MinConfidence: 70,
+            })
+          );
+
+          aiTags = (labelResult.Labels || [])
+            .map((label) => label.Name.toLowerCase())
+            .filter((tag) => tag.length > 2);
+
+          console.log("AI tags detected:", aiTags);
+        } catch (error) {
+          console.error("Rekognition tagging error:", error.message);
+          aiTags = [];
+        }
+      }
+
       const media = await Media.create({
-        url:         result.secure_url,
-        publicId:    result.public_id,
-        type:        isVideo ? "video" : "image",
-        width:       result.width,
-        height:      result.height,
-        size:        result.bytes,
-        album:       albumId,
-        uploadedBy:  session.user.id,
-        tags:        [],
-        isPublic:    album.isPublic,
+        url: result.secure_url,
+        publicId: result.public_id,
+        type: isVideo ? "video" : "image",
+        width: result.width,
+        height: result.height,
+        size: result.bytes,
+        album: albumId,
+        uploadedBy: session.user.id,
+        tags: aiTags,
+        isPublic: album.isPublic,
       });
 
       uploaded.push(media);

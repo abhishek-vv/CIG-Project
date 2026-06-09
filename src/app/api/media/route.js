@@ -38,10 +38,16 @@ export async function GET(req) {
       query.isPublic = true;
     }
 
+    const { searchParams: sp } = new URL(req.url);
+    const page = parseInt(sp.get("page") || "1");
+    const limit = parseInt(sp.get("limit") || "100");
+    const skip = (page - 1) * limit;
     const media = await Media.find(query)
       .populate("uploadedBy", "name image")
       .populate("taggedUsers", "name email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     return NextResponse.json({ media }, { status: 200 });
   } catch (error) {

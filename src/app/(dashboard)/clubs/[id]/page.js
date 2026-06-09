@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
+import QRModal from "@/components/ui/QRModal";
 import Link from "next/link";
 
 export default function ClubDetailPage() {
@@ -16,7 +17,7 @@ export default function ClubDetailPage() {
   const [activeTab, setActiveTab] = useState("events");
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMember, setIsMember] = useState(false);
-
+  const [showQR, setShowQR] = useState(false);
   // Join modal
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
@@ -116,11 +117,11 @@ export default function ClubDetailPage() {
       body: JSON.stringify({ isPublic: !currentIsPublic }),
     });
     if (res.ok) {
-    fetchEvents();
-  } else {
-    const data = await res.json();
-    alert(data.error);
-  }
+      fetchEvents();
+    } else {
+      const data = await res.json();
+      alert(data.error);
+    }
   }
 
   if (loading) {
@@ -138,8 +139,8 @@ export default function ClubDetailPage() {
     return (
       <div className="text-center py-20">
         <p className="text-4xl mb-3">🏛️</p>
-        <p className="font-medium text-gray-700">Club not found</p>
-        <p className="text-gray-400 text-sm mt-1">This club may have been deleted or the link is incorrect.</p>
+        <p className="font-medium text-white-700">Club not found</p>
+        <p className="text-white-400 text-sm mt-1">This club may have been deleted or the link is incorrect.</p>
         <Link href="/clubs" className="text-purple-600 hover:underline text-sm mt-3 inline-block">
           ← Back to clubs
         </Link>
@@ -155,7 +156,7 @@ export default function ClubDetailPage() {
   return (
     <div>
       {/* Back link */}
-      <Link href="/clubs" className="text-sm text-gray-500 hover:text-gray-700">
+      <Link href="/clubs" className="text-sm text-white-500 hover:text-white-700">
         ← Back to clubs
       </Link>
 
@@ -163,7 +164,7 @@ export default function ClubDetailPage() {
       <div className="flex items-start justify-between mt-2 mb-6">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-gray-900">{club.name}</h1>
+            <h1 className="text-2xl font-semibold text-white-900">{club.name}</h1>
             {myRole && (
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${myRole === "ADMIN" ? "bg-red-100 text-red-700" :
                 myRole === "PHOTOGRAPHER" ? "bg-blue-100 text-blue-700" :
@@ -173,16 +174,16 @@ export default function ClubDetailPage() {
               </span>
             )}
             {!myRole && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-white-500">
                 Not a member
               </span>
             )}
           </div>
-          <p className="text-gray-500 text-sm mt-1 capitalize">
+          <p className="text-white-500 text-sm mt-1 capitalize">
             {club.category} • {club.members?.length || 0} members
           </p>
           {club.description && (
-            <p className="text-gray-600 mt-2">{club.description}</p>
+            <p className="text-white-600 mt-2">{club.description}</p>
           )}
         </div>
 
@@ -198,14 +199,22 @@ export default function ClubDetailPage() {
           )}
 
           {/* Create event for members */}
-          {canCreateEvent && (
-            <Link
-              href={`/events/new?clubId=${id}`}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition"
+          <div className="flex gap-2 shrink-0 ml-4">
+            <button
+              onClick={() => setShowQR(true)}
+              className="text-sm border border-zinc-800 text-white-600 px-3 py-2 rounded-lg hover:bg-zinc-800 transition"
             >
-              + Create event
-            </Link>
-          )}
+              📷 QR
+            </button>
+            {canCreateEvent && (
+              <Link
+                href={`/events/new?clubId=${id}`}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition"
+              >
+                + Create event
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
@@ -216,19 +225,19 @@ export default function ClubDetailPage() {
             🔑 Invite codes — share these with your club members
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-white rounded-lg p-3 border border-purple-100">
-              <p className="text-xs text-gray-500 mb-1">Club Member code</p>
+            <div className="bg-zinc-700 rounded-lg p-3 border border-purple-100">
+              <p className="text-xs text-white-500 mb-1">Club Member code</p>
               <p className="font-mono font-bold text-purple-700 text-sm tracking-wider">
                 {club.memberCode}
               </p>
-              <p className="text-xs text-gray-400 mt-1">Gives CLUB_MEMBER role</p>
+              <p className="text-xs text-white-400 mt-1">Gives CLUB_MEMBER role</p>
             </div>
-            <div className="bg-white rounded-lg p-3 border border-purple-100">
-              <p className="text-xs text-gray-500 mb-1">Photographer code</p>
+            <div className="bg-zinc-700 rounded-lg p-3 border border-purple-100">
+              <p className="text-xs text-white-500 mb-1">Photographer code</p>
               <p className="font-mono font-bold text-blue-700 text-sm tracking-wider">
                 {club.photographerCode}
               </p>
-              <p className="text-xs text-gray-400 mt-1">Gives PHOTOGRAPHER role</p>
+              <p className="text-xs text-white-400 mt-1">Gives PHOTOGRAPHER role</p>
             </div>
           </div>
         </div>
@@ -255,14 +264,14 @@ export default function ClubDetailPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200 mb-6">
+      <div className="flex gap-1 border-b border-zinc-800 mb-6">
         {["events", ...(myRole ? ["members"] : [])].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 text-sm font-medium capitalize transition border-b-2 -mb-px ${activeTab === tab
               ? "border-purple-600 text-purple-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              : "border-transparent text-white-500 hover:text-white-700"
               }`}
           >
             {tab === "events"
@@ -276,7 +285,7 @@ export default function ClubDetailPage() {
       {activeTab === "events" && (
         <div>
           {events.length === 0 ? (
-            <div className="text-center py-16 text-gray-400 border border-dashed border-gray-200 rounded-xl">
+            <div className="text-center py-16 text-white-400 border border-dashed border-zinc-800 rounded-xl">
               <p className="text-3xl mb-2">📅</p>
               <p className="font-medium">No public events yet</p>
               {canCreateEvent && (
@@ -291,30 +300,30 @@ export default function ClubDetailPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {events.map((event) => (
-                <div key={event._id} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-sm transition">
+                <div key={event._id} className="bg-zinc-700 border border-zinc-800 rounded-xl p-5 hover:border-purple-300 hover:shadow-sm transition">
                   <div className="flex items-start justify-between mb-2">
-                    <Link href={`/events/${event._id}`} className="font-semibold text-gray-900 hover:text-purple-600 transition">
+                    <Link href={`/events/${event._id}`} className="font-semibold text-white-900 hover:text-purple-600 transition">
                       {event.name}
                     </Link>
-                    <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ml-2 ${event.isPublic ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                    <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ml-2 ${event.isPublic ? "bg-green-100 text-green-700" : "bg-gray-100 text-white-600"
                       }`}>
                       {event.isPublic ? "Public" : "Private"}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400 capitalize">
+                  <p className="text-xs text-white-400 capitalize">
                     {event.category} • {new Date(event.date).toLocaleDateString()}
                   </p>
                   {event.description && (
-                    <p className="text-gray-500 text-sm mt-2 line-clamp-2">{event.description}</p>
+                    <p className="text-white-500 text-sm mt-2 line-clamp-2">{event.description}</p>
                   )}
                   <div className="flex items-center justify-between mt-3">
-                    <p className="text-xs text-gray-400">By {event.createdBy?.name}</p>
+                    <p className="text-xs text-white-400">By {event.createdBy?.name}</p>
                     {/* Toggle public/private — only for admin or event creator */}
                     {(isAdmin || event.createdBy?._id?.toString() === session?.user?.id) && (
                       <button
                         onClick={() => handleToggleEventVisibility(event._id, event.isPublic)}
                         className={`text-xs px-2 py-1 rounded-lg border transition ${event.isPublic
-                          ? "border-gray-200 text-gray-500 hover:bg-gray-50"
+                          ? "border-zinc-800 text-white-500 hover:bg-zinc-800"
                           : "border-green-200 text-green-600 hover:bg-green-50"
                           }`}
                       >
@@ -333,10 +342,10 @@ export default function ClubDetailPage() {
       {activeTab === "members" && myRole && (
         <div className="space-y-2">
           {/* Club creator */}
-          <div className="bg-white border border-gray-200 rounded-xl px-5 py-3 flex items-center justify-between">
+          <div className="bg-zinc-700 border border-zinc-800 rounded-xl px-5 py-3 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-900">{club.createdBy?.name}</p>
-              <p className="text-xs text-gray-400">{club.createdBy?.email}</p>
+              <p className="text-sm font-medium text-white-900">{club.createdBy?.name}</p>
+              <p className="text-xs text-white-400">{club.createdBy?.email}</p>
             </div>
             <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
               ADMIN
@@ -351,18 +360,18 @@ export default function ClubDetailPage() {
             .map((member) => (
               <div
                 key={member._id}
-                className="bg-white border border-gray-200 rounded-xl px-5 py-3 flex items-center justify-between"
+                className="bg-zinc-700 border border-zinc-800 rounded-xl px-5 py-3 flex items-center justify-between"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{member.user?.name}</p>
-                  <p className="text-xs text-gray-400">{member.user?.email}</p>
+                  <p className="text-sm font-medium text-white-900">{member.user?.name}</p>
+                  <p className="text-xs text-white-400">{member.user?.email}</p>
                 </div>
                 {isAdmin ? (
                   <div className="flex items-center gap-2">
                     <select
                       value={member.role}
                       onChange={(e) => handleRoleChange(member.user?._id, e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="text-xs border border-zinc-800 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
                       <option value="CLUB_MEMBER">Club Member</option>
                       <option value="PHOTOGRAPHER">Photographer</option>
@@ -376,8 +385,8 @@ export default function ClubDetailPage() {
                   </div>
                 ) : (
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${member.role === "PHOTOGRAPHER"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-green-100 text-green-700"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-green-100 text-green-700"
                     }`}>
                     {member.role}
                   </span>
@@ -386,7 +395,7 @@ export default function ClubDetailPage() {
             ))}
 
           {club.members.length <= 1 && (
-            <div className="text-center py-10 text-gray-400 border border-dashed border-gray-200 rounded-xl">
+            <div className="text-center py-10 text-white-400 border border-dashed border-zinc-800 rounded-xl">
               <p className="text-2xl mb-2">👥</p>
               <p className="text-sm font-medium">No other members yet</p>
               {isAdmin && (
@@ -400,9 +409,9 @@ export default function ClubDetailPage() {
       {/* Join club modal */}
       {showJoinModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Join {club.name}</h2>
-            <p className="text-sm text-gray-500 mb-4">
+          <div className="bg-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h2 className="text-lg font-semibold text-white-900 mb-1">Join {club.name}</h2>
+            <p className="text-sm text-white-500 mb-4">
               Enter the invite code given by your club admin.
             </p>
 
@@ -412,7 +421,7 @@ export default function ClubDetailPage() {
                 placeholder="e.g. MEM-ABC12345"
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500 uppercase"
+                className="w-full border border-zinc-800 rounded-lg px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500 uppercase"
                 required
               />
 
@@ -438,7 +447,7 @@ export default function ClubDetailPage() {
                     setInviteCode("");
                     setJoinError("");
                   }}
-                  className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm hover:bg-gray-50 transition"
+                  className="flex-1 border border-zinc-800 text-white-600 py-2.5 rounded-lg text-sm hover:bg-zinc-800 transition"
                 >
                   Cancel
                 </button>
@@ -446,6 +455,13 @@ export default function ClubDetailPage() {
             </form>
           </div>
         </div>
+      )}
+      {showQR && (
+        <QRModal
+          url={`${window.location.origin}/clubs/${id}`}
+          title={club?.name}
+          onClose={() => setShowQR(false)}
+        />
       )}
     </div>
   );

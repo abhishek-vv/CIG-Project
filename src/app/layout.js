@@ -3,8 +3,8 @@ import SessionProvider from "@/components/auth/SessionProvider";
 import { auth } from "@/lib/auth";
 
 export const metadata = {
-  title: "MediaHub — Event & Media Platform",
-  description: "Organize, share and interact with event media",
+  title:       "MediaHub — Campus Event Media Platform",
+  description: "Upload, organize and share event photos and videos for campus clubs",
 };
 
 export default async function RootLayout({ children }) {
@@ -12,7 +12,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-900 antialiased">
+      <body className="bg-zinc-950 text-zinc-100 antialiased">
         <SessionProvider session={session}>
           {children}
         </SessionProvider>

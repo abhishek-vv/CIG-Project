@@ -109,7 +109,7 @@ export default function EventDetailPage() {
     return (
       <div className="text-center py-20">
         <p className="text-4xl mb-3">📅</p>
-        <p className="font-medium text-gray-700">Event not found</p>
+        <p className="font-medium text-white-700">Event not found</p>
         <Link href="/events" className="text-purple-600 hover:underline text-sm mt-2 inline-block">
           ← Back to events
         </Link>
@@ -123,14 +123,14 @@ export default function EventDetailPage() {
 
   return (
     <div>
-      <Link href="/events" className="text-sm text-gray-500 hover:text-gray-700">
+      <Link href="/events" className="text-sm text-white-500 hover:text-white-700">
         ← Back to events
       </Link>
 
       <div className="flex items-start justify-between mt-2 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">{event.name}</h1>
-          <div className="flex items-center gap-3 mt-1 text-sm text-gray-500 flex-wrap">
+          <h1 className="text-2xl font-semibold text-white-900">{event.name}</h1>
+          <div className="flex items-center gap-3 mt-1 text-sm text-white-500 flex-wrap">
             <span className="capitalize">{event.category}</span>
             <span>•</span>
             <span>{new Date(event.date).toLocaleDateString()}</span>
@@ -149,13 +149,13 @@ export default function EventDetailPage() {
             )}
             <span className={`text-xs px-2 py-0.5 rounded-full ${event.isPublic
               ? "bg-green-100 text-green-700"
-              : "bg-gray-100 text-gray-600"
+              : "bg-gray-100 text-white-600"
               }`}>
               {event.isPublic ? "Public" : "Private"}
             </span>
           </div>
           {event.description && (
-            <p className="text-gray-600 mt-2">{event.description}</p>
+            <p className="text-white-600 mt-2">{event.description}</p>
           )}
         </div>
 
@@ -164,7 +164,7 @@ export default function EventDetailPage() {
             <button
               onClick={handleToggleEventVisibility}
               className={`text-sm border px-3 py-1.5 rounded-lg transition ${event.isPublic
-                  ? "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  ? "border-gray-200 text-white-600 hover:bg-zinc-800"
                   : "border-green-200 text-green-600 hover:bg-green-50"
                 }`}
             >
@@ -181,8 +181,8 @@ export default function EventDetailPage() {
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Albums <span className="text-gray-400 font-normal text-base">({albums.length})</span>
+        <h2 className="text-lg font-semibold text-white-900">
+          Albums <span className="text-white-400 font-normal text-base">({albums.length})</span>
         </h2>
         {canCreateAlbum && (
           <button
@@ -195,8 +195,8 @@ export default function EventDetailPage() {
       </div>
 
       {showAlbumForm && (
-        <div className="bg-white border border-purple-200 rounded-xl p-5 mb-4">
-          <h3 className="font-medium text-gray-900 mb-4">New album</h3>
+        <div className="bg-zinc-900 border border-purple-200 rounded-xl p-5 mb-4">
+          <h3 className="font-medium text-white-900 mb-4">New album</h3>
           <form onSubmit={handleCreateAlbum} className="space-y-3">
             <input
               type="text"
@@ -221,7 +221,7 @@ export default function EventDetailPage() {
                 onChange={(e) => setAlbumForm({ ...albumForm, isPublic: e.target.checked })}
                 className="w-4 h-4 accent-purple-600"
               />
-              <label htmlFor="albumPublic" className="text-sm text-gray-700">
+              <label htmlFor="albumPublic" className="text-sm text-white-700">
                 Public album
               </label>
             </div>
@@ -241,7 +241,7 @@ export default function EventDetailPage() {
               <button
                 type="button"
                 onClick={() => { setShowAlbumForm(false); setAlbumError(""); }}
-                className="border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition"
+                className="border border-gray-200 text-white-600 px-4 py-2 rounded-lg text-sm hover:bg-zinc-800 transition"
               >
                 Cancel
               </button>
@@ -251,7 +251,7 @@ export default function EventDetailPage() {
       )}
 
       {albums.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 border border-dashed border-gray-200 rounded-xl">
+        <div className="text-center py-16 text-white-400 border border-dashed border-gray-200 rounded-xl">
           <p className="text-3xl mb-2">🗂️</p>
           <p className="font-medium">No albums yet</p>
           {canCreateAlbum && (
@@ -268,36 +268,36 @@ export default function EventDetailPage() {
           {albums.map((album) => (
             <div
               key={album._id}
-              className="bg-white border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-sm transition"
+              className="bg-zinc-900 border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-sm transition"
             >
               <div className="flex items-start justify-between">
                 <Link
                   href={`/albums/${album._id}`}
-                  className="font-semibold text-gray-900 hover:text-purple-600 transition"
+                  className="font-semibold text-white-900 hover:text-purple-600 transition"
                 >
                   {album.name}
                 </Link>
                 <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ml-2 ${album.isPublic
                   ? "bg-green-100 text-green-700"
-                  : "bg-gray-100 text-gray-600"
+                  : "bg-red-100 text-red-700"
                   }`}>
                   {album.isPublic ? "Public" : "Private"}
                 </span>
               </div>
 
               {album.description && (
-                <p className="text-gray-500 text-sm mt-1">{album.description}</p>
+                <p className="text-white-500 text-sm mt-1">{album.description}</p>
               )}
 
               <div className="flex items-center justify-between mt-3">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-white-400">
                   By {album.createdBy?.name} • {new Date(album.createdAt).toLocaleDateString()}
                 </p>
                 <div className="flex gap-2">
                   {(canEdit || album.createdBy?._id?.toString() === session?.user?.id) && (
                     <button
                       onClick={() => handleToggleAlbumVisibility(album._id, album.isPublic)}
-                      className="text-xs text-gray-500 border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50 transition"
+                      className="text-xs text-white-500 border border-gray-200 px-2 py-1 rounded-lg hover:bg-zinc-800 transition"
                     >
                       {album.isPublic ? "Make private" : "Make public"}
                     </button>

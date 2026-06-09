@@ -8,20 +8,18 @@ export default function UploadPage() {
   const { data: session } = useSession();
   const router = useRouter();
 
-  const [clubs,     setClubs]     = useState([]);
-  const [events,    setEvents]    = useState([]);
-  const [albums,    setAlbums]    = useState([]);
+  const [clubs,         setClubs]         = useState([]);
+  const [events,        setEvents]        = useState([]);
+  const [albums,        setAlbums]        = useState([]);
   const [selectedClub,  setSelectedClub]  = useState("");
   const [selectedEvent, setSelectedEvent] = useState("");
   const [selectedAlbum, setSelectedAlbum] = useState("");
-  const [files,     setFiles]     = useState([]);
-  const [previews,  setPreviews]  = useState([]);
-  const [uploading, setUploading] = useState(false);
-  const [progress,  setProgress]  = useState(0);
-  const [error,     setError]     = useState("");
-  const [success,   setSuccess]   = useState("");
-  const [dragging,  setDragging]  = useState(false);
-
+  const [files,         setFiles]         = useState([]);
+  const [previews,      setPreviews]      = useState([]);
+  const [uploading,     setUploading]     = useState(false);
+  const [error,         setError]         = useState("");
+  const [success,       setSuccess]       = useState("");
+  const [dragging,      setDragging]      = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -31,10 +29,7 @@ export default function UploadPage() {
       const myClubs = (data.clubs || []).filter((club) =>
         club.createdBy?._id === session?.user?.id ||
         club.createdBy === session?.user?.id ||
-        club.members?.some((m) =>
-          m.user === session?.user?.id ||
-          m.user?._id === session?.user?.id
-        )
+        club.members?.some((m) => m.user === session?.user?.id || m.user?._id === session?.user?.id)
       );
       setClubs(myClubs);
     }
@@ -66,38 +61,17 @@ export default function UploadPage() {
   }, [selectedEvent]);
 
   function handleFiles(newFiles) {
-    const fileArray = Array.from(newFiles);
-    const valid = fileArray.filter((f) =>
-      f.type.startsWith("image/") || f.type.startsWith("video/")
+    const fileArray = Array.from(newFiles).filter(
+      (f) => f.type.startsWith("image/") || f.type.startsWith("video/")
     );
-
-    setFiles((prev) => [...prev, ...valid]);
-
-    valid.forEach((file) => {
+    setFiles((prev) => [...prev, ...fileArray]);
+    fileArray.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPreviews((prev) => [
-          ...prev,
-          { url: e.target.result, name: file.name, type: file.type, size: file.size },
-        ]);
+        setPreviews((prev) => [...prev, { url: e.target.result, name: file.name, type: file.type, size: file.size }]);
       };
       reader.readAsDataURL(file);
     });
-  }
-
-  function handleDrop(e) {
-    e.preventDefault();
-    setDragging(false);
-    handleFiles(e.dataTransfer.files);
-  }
-
-  function handleDragOver(e) {
-    e.preventDefault();
-    setDragging(true);
-  }
-
-  function handleDragLeave() {
-    setDragging(false);
   }
 
   function removeFile(index) {
@@ -108,34 +82,22 @@ export default function UploadPage() {
   async function handleUpload() {
     if (!selectedAlbum) { setError("Please select an album"); return; }
     if (files.length === 0) { setError("Please select at least one file"); return; }
-
     setError("");
     setSuccess("");
     setUploading(true);
-    setProgress(0);
-
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
     formData.append("albumId", selectedAlbum);
-
-    const res  = await fetch("/api/media/upload", {
-      method: "POST",
-      body:   formData,
-    });
-
+    const res  = await fetch("/api/media/upload", { method: "POST", body: formData });
     const data = await res.json();
     setUploading(false);
-    setProgress(100);
-
     if (!res.ok) {
       setError(data.error);
     } else {
       setSuccess(`${data.count} file(s) uploaded successfully!`);
       setFiles([]);
       setPreviews([]);
-      setTimeout(() => {
-        router.push(`/albums/${selectedAlbum}`);
-      }, 1500);
+      setTimeout(() => router.push(`/albums/${selectedAlbum}`), 1500);
     }
   }
 
@@ -147,107 +109,64 @@ export default function UploadPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Upload Media</h1>
-        <p className="text-gray-500 text-sm mt-1">Upload photos and videos to an album</p>
+        <h1 className="text-2xl font-bold text-white">Upload Media</h1>
+        <p className="text-zinc-500 text-sm mt-1">Upload photos and videos to an album</p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Club</label>
-          <select
-            value={selectedClub}
-            onChange={(e) => setSelectedClub(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="">Select a club</option>
-            {clubs.map((club) => (
-              <option key={club._id} value={club._id}>{club.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Event</label>
-          <select
-            value={selectedEvent}
-            onChange={(e) => setSelectedEvent(e.target.value)}
-            disabled={!selectedClub}
-            className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-          >
-            <option value="">Select an event</option>
-            {events.map((event) => (
-              <option key={event._id} value={event._id}>{event.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Album</label>
-          <select
-            value={selectedAlbum}
-            onChange={(e) => setSelectedAlbum(e.target.value)}
-            disabled={!selectedEvent}
-            className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-          >
-            <option value="">Select an album</option>
-            {albums.map((album) => (
-              <option key={album._id} value={album._id}>{album.name}</option>
-            ))}
-          </select>
-        </div>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-4 space-y-4">
+        {[
+          { label: "Club", value: selectedClub, onChange: setSelectedClub, options: clubs, disabled: false },
+          { label: "Event", value: selectedEvent, onChange: setSelectedEvent, options: events, disabled: !selectedClub },
+          { label: "Album", value: selectedAlbum, onChange: setSelectedAlbum, options: albums, disabled: !selectedEvent },
+        ].map((s) => (
+          <div key={s.label}>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">{s.label}</label>
+            <select
+              value={s.value}
+              onChange={(e) => s.onChange(e.target.value)}
+              disabled={s.disabled}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 disabled:opacity-50"
+            >
+              <option value="" className="bg-zinc-800">Select {s.label.toLowerCase()}</option>
+              {s.options.map((opt) => (
+                <option key={opt._id} value={opt._id} className="bg-zinc-800">{opt.name}</option>
+              ))}
+            </select>
+          </div>
+        ))}
       </div>
 
       <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
         onClick={() => fileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition mb-4 ${
-          dragging
-            ? "border-purple-500 bg-purple-50"
-            : "border-gray-300 hover:border-purple-400 hover:bg-gray-50"
+        className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition mb-4 ${
+          dragging ? "border-purple-500 bg-purple-500/5" : "border-zinc-700 hover:border-purple-600 hover:bg-zinc-900"
         }`}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept="image/*,video/*"
-          className="hidden"
-          onChange={(e) => handleFiles(e.target.files)}
-        />
+        <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" className="hidden" onChange={(e) => handleFiles(e.target.files)}/>
         <p className="text-4xl mb-3">📸</p>
-        <p className="text-gray-700 font-medium">Drag and drop files here</p>
-        <p className="text-gray-400 text-sm mt-1">or click to browse</p>
-        <p className="text-gray-400 text-xs mt-2">Supports images and videos</p>
+        <p className="text-zinc-300 font-medium">Drag and drop files here</p>
+        <p className="text-zinc-500 text-sm mt-1">or click to browse</p>
+        <p className="text-zinc-600 text-xs mt-2">Supports images and videos</p>
       </div>
 
       {previews.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-gray-700">{previews.length} file(s) selected</p>
-            <button
-              onClick={() => { setFiles([]); setPreviews([]); }}
-              className="text-xs text-red-400 hover:text-red-600 transition"
-            >
+            <p className="text-sm font-medium text-zinc-300">{previews.length} file(s) selected</p>
+            <button onClick={() => { setFiles([]); setPreviews([]); }} className="text-xs text-red-400 hover:text-red-300 transition">
               Clear all
             </button>
           </div>
-
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {previews.map((preview, index) => (
               <div key={index} className="relative group">
                 {preview.type.startsWith("video/") ? (
-                  <video
-                    src={preview.url}
-                    className="w-full h-24 object-cover rounded-lg bg-gray-100"
-                  />
+                  <video src={preview.url} className="w-full h-24 object-cover rounded-xl bg-zinc-800"/>
                 ) : (
-                  <img
-                    src={preview.url}
-                    alt={preview.name}
-                    className="w-full h-24 object-cover rounded-lg"
-                  />
+                  <img src={preview.url} alt={preview.name} className="w-full h-24 object-cover rounded-xl"/>
                 )}
                 <button
                   onClick={(e) => { e.stopPropagation(); removeFile(index); }}
@@ -255,7 +174,7 @@ export default function UploadPage() {
                 >
                   ×
                 </button>
-                <p className="text-xs text-gray-400 mt-1 truncate">{formatSize(preview.size)}</p>
+                <p className="text-xs text-zinc-500 mt-1 truncate">{formatSize(preview.size)}</p>
               </div>
             ))}
           </div>
@@ -263,36 +182,32 @@ export default function UploadPage() {
       )}
 
       {uploading && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-700">Uploading...</p>
-            <p className="text-sm text-purple-600">{progress}%</p>
+            <p className="text-sm text-zinc-300">Uploading...</p>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2">
-            <div
-              className="bg-purple-600 h-2 rounded-full transition-all"
-              style={{ width: `${progress}%` }}
-            />
+          <div className="w-full bg-zinc-800 rounded-full h-2">
+            <div className="bg-purple-600 h-2 rounded-full animate-pulse w-full"/>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">
-          <p className="text-red-600 text-sm">{error}</p>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-4">
+          <p className="text-red-400 text-sm">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4">
-          <p className="text-green-600 text-sm">{success}</p>
+        <div className="bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3 mb-4">
+          <p className="text-green-400 text-sm">{success}</p>
         </div>
       )}
 
       <button
         onClick={handleUpload}
         disabled={uploading || files.length === 0 || !selectedAlbum}
-        className="w-full bg-purple-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-2xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {uploading ? "Uploading..." : `Upload ${files.length > 0 ? files.length + " file(s)" : ""}`}
       </button>
